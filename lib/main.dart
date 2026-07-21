@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
-//import 'package:task_app/screens/add_task_screen.dart';
-import 'package:task_app/screens/dashboard_screen.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import 'providers/task_provider.dart';
+import 'services/database_service.dart';
+import 'utils/app_routes.dart';
+import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Hive.initFlutter();
-  
-  await Hive.openBox<Map>('tasks_box');
-  runApp(const MyApp());
+  await DatabaseService.openBox();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => TaskProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,8 +27,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Task App',
-      home: DashboardScreen(),
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      initialRoute: AppRoutes.dashboard,
+      onGenerateRoute: onGenerateRoute,
     );
   }
 }

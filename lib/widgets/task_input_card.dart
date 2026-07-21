@@ -24,29 +24,38 @@ class TaskInputCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMulti = maxLines > 1;
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .03),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 55,
-            height: 55,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xffF2EEFF),
-              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xffF2EEFF), Color(0xffE5DEFF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: iconColor, size: 28),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-
-          const SizedBox(width: 18),
-
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,79 +66,52 @@ class TaskInputCard extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 15,
                       ),
                     ),
-                    Text(
-                      optional,
-                      style: const TextStyle(color: textSecondary),
-                    ),
+                    Text(optional,
+                        style: const TextStyle(color: textSecondary)),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
                 TextFormField(
                   controller: controller,
                   validator: validator,
                   maxLines: maxLines,
-
-                  onChanged: (_) {
-                    Form.of(context).validate();
-                  },
-
                   autovalidateMode: AutovalidateMode.disabled,
-
                   decoration: InputDecoration(
                     hintText: hint,
-
                     hintStyle: TextStyle(
                       color: Colors.grey.shade400,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
                     ),
-
                     filled: true,
-                    fillColor: Colors.white,
-
-                    contentPadding: const EdgeInsets.symmetric(
+                    fillColor: const Color(0xFFFAFAFC),
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 14,
+                      vertical: isMulti ? 14 : 14,
                     ),
-
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
                     ),
-
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: const BorderSide(
-                        color: Color(0xff6C63FF),
-                        width: 1.5,
-                      ),
+                          color: Color(0xff6C63FF), width: 1.5),
                     ),
-
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1.5,
-                      ),
+                      borderSide:
+                          const BorderSide(color: Colors.red, width: 1.5),
                     ),
-
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1.8,
-                      ),
+                      borderSide:
+                          const BorderSide(color: Colors.red, width: 1.8),
                     ),
-
-                    errorStyle: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                    ),
+                    errorStyle:
+                        const TextStyle(color: Colors.red, fontSize: 12),
                   ),
                 ),
               ],

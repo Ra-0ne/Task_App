@@ -18,25 +18,34 @@ class StatusSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xffE8E8E8),
-        ),
+        border: Border.all(color: const Color(0xffE8E8E8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .03),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Icon
           Container(
-            width: 55,
-            height: 55,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xffF3F0FF),
-              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xffF2EEFF), Color(0xffE5DEFF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.flag_circle_outlined,
               color: Color(0xff6C63FF),
-              size: 28,
+              size: 26,
             ),
           ),
 
@@ -77,6 +86,16 @@ class StatusSection extends StatelessWidget {
             iconColor: Colors.green,
             selected: selectedStatus == "Completed",
             onTap: () => onChanged("Completed"),
+          ),
+
+          const SizedBox(height: 12),
+
+          _StatusItem(
+            title: "Overdue",
+            icon: Icons.error_outline,
+            iconColor: Colors.red,
+            selected: selectedStatus == "Overdue",
+            onTap: () => onChanged("Overdue"),
           ),
         ],
       ),
