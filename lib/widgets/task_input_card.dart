@@ -10,6 +10,10 @@ class TaskInputCard extends StatelessWidget {
 
   final TextEditingController controller;
   final String? Function(String?)? validator;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final Widget? trailing;
 
   const TaskInputCard({
     super.key,
@@ -20,6 +24,10 @@ class TaskInputCard extends StatelessWidget {
     required this.validator,
     this.maxLines = 1,
     this.optional = '',
+    this.focusNode,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.trailing,
   });
 
   @override
@@ -71,6 +79,8 @@ class TaskInputCard extends StatelessWidget {
                     ),
                     Text(optional,
                         style: const TextStyle(color: textSecondary)),
+                    const Spacer(),
+                    ?trailing,
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -78,6 +88,9 @@ class TaskInputCard extends StatelessWidget {
                   controller: controller,
                   validator: validator,
                   maxLines: maxLines,
+                  focusNode: focusNode,
+                  textInputAction: textInputAction,
+                  onFieldSubmitted: onFieldSubmitted,
                   autovalidateMode: AutovalidateMode.disabled,
                   decoration: InputDecoration(
                     hintText: hint,

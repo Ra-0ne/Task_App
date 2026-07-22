@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:task_app/utils/app_colors.dart';
 
 class StatusSection extends StatelessWidget {
   final String selectedStatus;
@@ -11,10 +10,28 @@ class StatusSection extends StatelessWidget {
     required this.onChanged,
   });
 
+  static const _options = <_StatusOption>[
+    _StatusOption(
+      title: 'Pending',
+      icon: Icons.radio_button_unchecked_rounded,
+      color: Color(0xFFF59E0B),
+    ),
+    _StatusOption(
+      title: 'Completed',
+      icon: Icons.check_circle_outline_rounded,
+      color: Color(0xFF10B981),
+    ),
+    _StatusOption(
+      title: 'Overdue',
+      icon: Icons.error_outline_rounded,
+      color: Color(0xFFEF4444),
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -30,72 +47,58 @@ class StatusSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xffF2EEFF), Color(0xffE5DEFF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          /// Header row: icon + title
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xffF2EEFF), Color(0xffE5DEFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.flag_circle_outlined,
+                  color: Color(0xff6C63FF),
+                  size: 22,
+                ),
               ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.flag_circle_outlined,
-              color: Color(0xff6C63FF),
-              size: 26,
-            ),
+              const SizedBox(width: 12),
+              const Text(
+                'Status',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'Tap to choose',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
           ),
-
           const SizedBox(height: 16),
 
-          const Text(
-            "Status",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          Text(
-            "Select task status",
-            style: TextStyle(
-              color: Colors.grey.shade500,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          _StatusItem(
-            title: "Pending",
-            icon: Icons.radio_button_unchecked,
-            iconColor: iconColor,
-            selected: selectedStatus == "Pending",
-            onTap: () => onChanged("Pending"),
-          ),
-
-          const SizedBox(height: 12),
-
-          _StatusItem(
-            title: "Completed",
-            icon: Icons.check_circle_outline,
-            iconColor: Colors.green,
-            selected: selectedStatus == "Completed",
-            onTap: () => onChanged("Completed"),
-          ),
-
-          const SizedBox(height: 12),
-
-          _StatusItem(
-            title: "Overdue",
-            icon: Icons.error_outline,
-            iconColor: Colors.red,
-            selected: selectedStatus == "Overdue",
-            onTap: () => onChanged("Overdue"),
+          /// Compact status chips in a Wrap
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _options.map((opt) {
+              final selected = selectedStatus == opt.title;
+              return _StatusChip(
+                option: opt,
+                selected: selected,
+                onTap: () => onChanged(opt.title),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -103,73 +106,79 @@ class StatusSection extends StatelessWidget {
   }
 }
 
-class _StatusItem extends StatelessWidget {
+class _StatusOption {
   final String title;
   final IconData icon;
-  final Color iconColor;
+  final Color color;
+  const _StatusOption({
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class _StatusChip extends StatelessWidget {
+  final _StatusOption option;
   final bool selected;
   final VoidCallback onTap;
 
-  const _StatusItem({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
+  const _StatusChip({
+    required this.option,
     required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 15,
-        ),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xffF3F0FF)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: selected ? option.color : option.color.withValues(alpha: .08),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected
-                ? const Color(0xff6C63FF)
-                : const Color(0xffE5E5E5),
-            width: 1.4,
+            color: selected ? option.color : option.color.withValues(alpha: .3),
+            width: selected ? 1.5 : 1,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: option.color.withValues(alpha: .3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon,
-              color: iconColor,
+              option.icon,
+              color: selected ? Colors.white : option.color,
+              size: 18,
             ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: selected
-                      ? const Color(0xff6C63FF)
-                      : Colors.black87,
-                ),
+            const SizedBox(width: 8),
+            Text(
+              option.title,
+              style: TextStyle(
+                color: selected ? Colors.white : option.color,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
-
-            AnimatedOpacity(
+            const SizedBox(width: 6),
+            AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              opacity: selected ? 1 : 0,
-              child: const Icon(
-                Icons.check_circle,
-                color: Color(0xff6C63FF),
-              ),
+              child: selected
+                  ? Icon(Icons.check_rounded,
+                      key: ValueKey(option.title),
+                      color: Colors.white,
+                      size: 16)
+                  : const SizedBox.shrink(),
             ),
           ],
         ),

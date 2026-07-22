@@ -5,7 +5,12 @@ import '../utils/app_colors.dart';
 
 /// Horizontal scrollable filter chips: All / Pending / Completed / Overdue.
 class FilterChipsRow extends StatelessWidget {
-  const FilterChipsRow({super.key});
+  final double paddingHorizontal;
+
+  const FilterChipsRow({
+    super.key,
+    this.paddingHorizontal = 20,
+  });
 
   static const _filters = TaskStatusFilter.values;
 
@@ -15,9 +20,11 @@ class FilterChipsRow extends StatelessWidget {
     final active = provider.statusFilter;
 
     return SizedBox(
-      height: 42,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.symmetric(horizontal: paddingHorizontal),
         itemCount: _filters.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {

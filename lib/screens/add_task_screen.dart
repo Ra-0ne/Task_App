@@ -21,21 +21,29 @@ class AddTaskScreen extends StatefulWidget {
   State<AddTaskScreen> createState() => _AddTaskScreenState();
 }
 
-class _AddTaskScreenState extends State<AddTaskScreen> {
+class _AddTaskScreenState extends State<AddTaskScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   final categoryController = TextEditingController();
+  final titleFocus = FocusNode();
+  final descriptionFocus = FocusNode();
+  final categoryFocus = FocusNode();
 
   String selectedStatus = 'Pending';
   bool autoValidate = false;
   bool _saving = false;
+
+  late final AnimationController _stagger;
+  late final List<Animation<double>> _fieldAnims;
 
   bool get isEditing => widget.task != null;
 
   @override
   void initState() {
     super.initState();
+
     if (isEditing) {
       final t = widget.task!;
       titleController.text = t.title;
@@ -43,6 +51,20 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       categoryController.text = t.category == 'General' ? '' : t.category;
       selectedStatus = t.status.label;
     }
+
+    _stagger = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+    _fieldAnims = List.generate(6, (i) {
+      final start = i * 0.07;
+      final end = (start + 0.3).clamp(0.0, 1.0);
+      return CurvedAnimation(
+        parent: _stagger,
+        curve: Interval(start, end, curve: Curves.easeOutCubic),
+      );
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _stagger.forward());
   }
 
   @override
@@ -50,6 +72,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     titleController.dispose();
     descriptionController.dispose();
     categoryController.dispose();
+    titleFocus.dispose();
+    descriptionFocus.dispose();
+    categoryFocus.dispose();
+    _stagger.dispose();
     super.dispose();
   }
 
@@ -84,6 +110,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     setState(() => autoValidate = true);
     if (!_formKey.currentState!.validate()) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _saving = true);
 
     final provider = context.read<TaskProvider>();
@@ -117,9 +144,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing
-              ? 'Task Updated Successfully'
-              : 'Task Added Successfully'),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(isEditing
+                  ? 'Task Updated Successfully'
+                  : 'Task Added Successfully'),
+            ],
+          ),
         ),
       );
       Navigator.of(context).pop(true);
@@ -128,11 +161,54 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+  Widget _staggered(int index, Widget child) {
+    return FadeTransition(
+      opacity: _fieldAnims[index],
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.12),
+          end: Offset.zero,
+        ).animate(_fieldAnims[index]),
+        child: child,
+      ),
+    );
+  }
+
+  /// Section label with a small accent bar.
+  Widget _sectionLabel(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 14,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6C63FF),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      );
+
   Widget _titleInput() => TaskInputCard(
         title: 'Task Title',
         hint: 'e.g. Design Login Screen',
         icon: Icons.assignment_outlined,
         controller: titleController,
+        focusNode: titleFocus,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) => descriptionFocus.requestFocus(),
         validator: (v) =>
             (v == null || v.trim().isEmpty) ? 'Task title is required' : null,
       );
@@ -144,17 +220,45 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         icon: Icons.description_outlined,
         maxLines: 4,
         optional: ' (Optional)',
+        focusNode: descriptionFocus,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) => categoryFocus.requestFocus(),
         validator: null,
       );
 
-  Widget _categoryInput() => TaskInputCard(
-        controller: categoryController,
-        title: 'Category',
-        hint: 'e.g. Development',
-        icon: Icons.sell_outlined,
-        optional: ' (Optional)',
-        validator: null,
-      );
+  /// Category input with a live color indicator dot.
+  Widget _categoryInput() {
+    return AnimatedBuilder(
+      animation: categoryController,
+      builder: (context, _) {
+        final color = _getCategoryColor(categoryController.text);
+        return TaskInputCard(
+          controller: categoryController,
+          title: 'Category',
+          hint: 'e.g. Development',
+          icon: Icons.sell_outlined,
+          optional: ' (Optional)',
+          focusNode: categoryFocus,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+          validator: null,
+          trailing: categoryController.text.trim().isNotEmpty
+              ? AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: color.withValues(alpha: .3), width: 3),
+                  ),
+                )
+              : null,
+        );
+      },
+    );
+  }
 
   Widget _statusSection() => StatusSection(
         selectedStatus: selectedStatus,
@@ -163,7 +267,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   Widget _submitBtn() => SizedBox(
         width: double.infinity,
-        height: 58,
+        height: 56,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: _saving
@@ -201,13 +305,21 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       borderRadius: BorderRadius.circular(18),
                       onTap: _submit,
                       child: Center(
-                        child: Text(
-                          isEditing ? 'Update Task' : '+  Add Task',
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(isEditing ? Icons.check_rounded : Icons.add,
+                                color: Colors.white, size: 22),
+                            const SizedBox(width: 8),
+                            Text(
+                              isEditing ? 'Update Task' : 'Add Task',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -223,13 +335,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
     return Scaffold(
       backgroundColor: background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
-            /// Gradient header
+            /// Gradient header with rounded bottom corners
             Container(
-              decoration: const BoxDecoration(gradient: AppGradients.header),
-              padding: EdgeInsets.symmetric(horizontal: padH, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: AppGradients.header,
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(28),
+                ),
+              ),
+              padding: EdgeInsets.fromLTRB(padH, 12, padH, 24),
               child: Row(
                 children: [
                   _CircleIconButton(
@@ -242,17 +360,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEditing ? 'Edit Task' : 'New Task',
+                          isEditing ? 'Edit Task' : 'Create New Task',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 22,
+                            fontSize: 23,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           isEditing
                               ? 'Update the task details below'
-                              : 'Add the task details to stay organized',
+                              : 'Fill in the details below to add a new task',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: .85),
                             fontSize: 13,
@@ -265,21 +384,39 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
             ),
 
-            /// Body
+            /// Body — scrollable form
             Expanded(
-              child: CenteredConstrained(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(padH, 24, padH, 32),
-                  child: Form(
-                    key: _formKey,
-                    autovalidateMode: autoValidate
-                        ? AutovalidateMode.onUserInteraction
-                        : AutovalidateMode.disabled,
-                    child: wide ? _twoColumn() : _singleColumn(),
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                behavior: HitTestBehavior.opaque,
+                child: CenteredConstrained(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(padH, 24, padH, 16),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: autoValidate
+                          ? AutovalidateMode.onUserInteraction
+                          : AutovalidateMode.disabled,
+                      child: wide ? _twoColumn() : _singleColumn(),
+                    ),
                   ),
                 ),
               ),
+            ),
+
+            /// Sticky submit bar — always visible above keyboard
+            Container(
+              decoration: BoxDecoration(
+                color: background,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              padding: EdgeInsets.fromLTRB(padH, 12, padH, 16),
+              child: CenteredConstrained(child: _submitBtn()),
             ),
           ],
         ),
@@ -291,45 +428,55 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _titleInput(),
+        _staggered(0, _sectionLabel('Task Details')),
+        _staggered(1, _titleInput()),
         const SizedBox(height: 16),
-        _descriptionInput(),
-        const SizedBox(height: 16),
-        _categoryInput(),
-        const SizedBox(height: 18),
-        _statusSection(),
-        const SizedBox(height: 28),
-        _submitBtn(),
+        _staggered(1, _descriptionInput()),
+        const SizedBox(height: 24),
+
+        _staggered(2, _sectionLabel('Organization')),
+        _staggered(3, _categoryInput()),
+        const SizedBox(height: 24),
+
+        _staggered(4, _sectionLabel('Status')),
+        _staggered(5, _statusSection()),
+        const SizedBox(height: 8),
       ],
     );
   }
 
   Widget _twoColumn() {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _titleInput(),
-              const SizedBox(height: 16),
-              _descriptionInput(),
-              const SizedBox(height: 16),
-              _categoryInput(),
-            ],
-          ),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _statusSection(),
-              const SizedBox(height: 28),
-              _submitBtn(),
-            ],
-          ),
+        _staggered(0, _sectionLabel('Task Details')),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _staggered(1, _titleInput()),
+                  const SizedBox(height: 16),
+                  _staggered(1, _descriptionInput()),
+                ],
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _staggered(2, _sectionLabel('Organization')),
+                  _staggered(3, _categoryInput()),
+                  const SizedBox(height: 20),
+                  _staggered(4, _sectionLabel('Status')),
+                  _staggered(5, _statusSection()),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );

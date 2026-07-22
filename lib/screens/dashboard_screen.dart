@@ -53,58 +53,76 @@ class DashboardScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: CenteredConstrained(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(padH, 8, padH, 96),
+                padding: const EdgeInsets.only(bottom: 96),
                 child: Consumer<TaskProvider>(
                   builder: (context, provider, _) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// Greeting
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutCubic,
-                          builder: (_, v, child) => Opacity(
-                            opacity: v,
-                            child: Transform.translate(
-                              offset: Offset(0, 12 * (1 - v)),
-                              child: child,
-                            ),
-                          ),
+                        /// Top section with horizontal padding
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(padH, 8, padH, 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                _greeting(),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .displayLarge
-                                    ?.copyWith(fontSize: 28),
+                              /// Greeting
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0, end: 1),
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOutCubic,
+                                builder: (_, v, child) => Opacity(
+                                  opacity: v,
+                                  child: Transform.translate(
+                                    offset: Offset(0, 12 * (1 - v)),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _greeting(),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .displayLarge
+                                          ?.copyWith(fontSize: 28),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      "Let's get things done today!",
+                                      style: TextStyle(
+                                          fontSize: 15, color: textSecondary),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                "Let's get things done today!",
-                                style: TextStyle(
-                                    fontSize: 15, color: textSecondary),
-                              ),
+                              const SizedBox(height: 20),
+
+                              const SearchBarWidget(),
+                              const SizedBox(height: 14),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
 
-                        const SearchBarWidget(),
-                        const SizedBox(height: 14),
-
-                        /// Filter chips — scroll with the content
-                        const FilterChipsRow(),
+                        /// Filter chips — full width, edge-to-edge scrolling
+                        FilterChipsRow(paddingHorizontal: padH),
                         const SizedBox(height: 18),
 
-                        /// Stat cards grid — responsive
-                        _StatGrid(provider: provider),
-                        const SizedBox(height: 22),
+                        /// Bottom section with horizontal padding
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: padH),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              /// Stat cards grid — responsive
+                              _StatGrid(provider: provider),
+                              const SizedBox(height: 22),
 
-                        /// Task list section (also responsive)
-                        TodayTasksSection(tasks: provider.filteredTasks),
+                              /// Task list section (also responsive)
+                              TodayTasksSection(tasks: provider.filteredTasks),
+                            ],
+                          ),
+                        ),
                       ],
                     );
                   },

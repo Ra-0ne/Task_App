@@ -108,6 +108,7 @@ class _CountUpState extends State<_CountUp>
       duration: const Duration(milliseconds: 600),
     );
     _setup(widget.value);
+    _c.forward();
   }
 
   @override
